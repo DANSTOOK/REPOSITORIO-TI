@@ -1,0 +1,11 @@
+# Respaldos exportados desde la aplicación
+kbd-respaldo-*.json
+
+# Configuración local de herramientas
+.claude/
+
+# Windows / editores
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

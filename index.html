@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>KBD | Base de conocimiento TI</title>
+  <script>try{const t=localStorage.getItem('kbd-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">K</span><span class="brand-text">KBD<small>Knowledge Base Desk</small></span></div>
+
+      <nav class="nav-list" aria-label="Vistas">
+        <button class="nav is-active" data-view="library"><span class="nav-icon">▦</span><span class="nav-text">Soluciones</span><b data-count="library"></b></button>
+        <button class="nav" data-view="checklists"><span class="nav-icon">☷</span><span class="nav-text">Checklists</span><b data-count="checklists"></b></button>
+        <button class="nav" data-view="unresolved"><span class="nav-icon">◌</span><span class="nav-text">Por documentar</span><b data-count="unresolved"></b></button>
+        <button class="nav" data-view="pinned"><span class="nav-icon">★</span><span class="nav-text">Fijados</span><b data-count="pinned"></b></button>
+      </nav>
+
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Más opciones" aria-expanded="false">⋯</button>
+
+      <div class="side-extra" id="sideExtra">
+        <div class="side-section">
+          <div class="side-label">Acciones</div>
+          <button class="side-action" id="newBtn" type="button"><span>＋</span> Nueva entrada</button>
+          <button class="side-action" id="exportBtn" type="button"><span>⇩</span> Exportar respaldo</button>
+          <label class="side-action"><span>⇧</span> Importar respaldo<input id="importInput" type="file" accept="application/json,.json" hidden></label>
+          <button class="side-action" id="settingsBtn" type="button"><span>⚙</span> Ajustes</button>
+        </div>
+        <div class="side-foot">
+          <div class="shortcuts" aria-label="Atajos de teclado">
+            <span><kbd>/</kbd>Buscar</span><span><kbd>N</kbd>Nueva</span>
+            <span><kbd>↑</kbd><kbd>↓</kbd>Navegar</span><span><kbd>E</kbd>Editar</span>
+            <span><kbd>P</kbd>Fijar</span><span><kbd>Esc</kbd>Cerrar</span>
+          </div>
+          <button class="side-action" id="themeBtn" type="button"></button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Centro de soporte</p>
+          <h1 id="viewTitle">Soluciones que el equipo ya conoce</h1>
+        </div>
+        <button class="btn btn-primary" id="newTopBtn" type="button">＋<span class="btn-label"> Registrar</span></button>
+      </header>
+
+      <section class="stats" id="stats" aria-label="Resumen"></section>
+
+      <section class="toolbar">
+        <label class="search">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Busca por folio, síntoma, categoría o solución…" autocomplete="off" aria-label="Buscar">
+          <kbd class="search-kbd">/</kbd>
+        </label>
+        <select id="category" class="select" aria-label="Categoría"></select>
+        <select id="sort" class="select" aria-label="Ordenar">
+          <option value="relevance">Relevancia</option>
+          <option value="recent">Más recientes</option>
+          <option value="folio">Folio A–Z</option>
+        </select>
+        <button class="btn btn-ghost" id="clearFilters" type="button">Limpiar</button>
+      </section>
+
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por estado"></div>
+
+      <div class="content">
+        <section class="list-panel">
+          <div class="list-heading"><span id="resultsText">Soluciones e incidencias</span><span class="muted" id="resultsMeta"></span></div>
+          <div id="cards" class="cards" role="listbox" aria-label="Resultados"></div>
+          <div id="empty" class="empty" hidden></div>
+        </section>
+        <aside class="detail" id="detail" aria-live="polite"></aside>
+      </div>
+    </main>
+  </div>
+
+  <!-- Registro -->
+  <dialog id="modal" class="modal">
+    <form id="entryForm">
+      <div class="modal-head">
+        <div><p class="eyebrow" id="modalEyebrow">Nueva entrada</p><h2 id="modalTitle">Documentar conocimiento</h2></div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="segmented" role="radiogroup" aria-label="Clase de registro">
+          <label class="segment"><input type="radio" name="clase" value="solucion" checked><span>▦ Solución / incidencia</span></label>
+          <label class="segment"><input type="radio" name="clase" value="checklist"><span>☷ Checklist operativo</span></label>
+        </div>
+        <div class="form-grid">
+          <label class="field">Folio o identificador
+            <input class="input" name="folio" required placeholder="Ej. INC1234567 o CHECKLIST APERTURAS">
+            <small class="hint" id="folioHint"></small>
+          </label>
+          <label class="field">Estado de conocimiento
+            <select class="input" name="tipo">
+              <option value="documentada">Solución documentada</option>
+              <option value="informativa">Informativa / guía de escalamiento</option>
+              <option value="pendiente">Pendiente de documentar</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="field">Categoría<input class="input" name="categoria" list="categoryList" placeholder="Ej. OXXO-Mx TI SopPOS.Performance"></label>
+          <label class="field">Grupo de asignación<input class="input" name="grupo" list="groupList" placeholder="Ej. OXXO-Mx TI SopPOS DAI"></label>
+        </div>
+        <label class="field">Nombre de la incidencia o checklist
+          <input class="input" name="descripcion" required placeholder="Describe el síntoma o la operación">
+        </label>
+        <label class="field"><span id="solucionLabel">Solución detallada</span>
+          <textarea class="input" name="solucion" rows="7"></textarea>
+          <small class="hint" id="solucionHint"></small>
+        </label>
+        <label class="field">Comentarios / contexto
+          <textarea class="input" name="dialogo" rows="3" placeholder="Pega el contexto, mensaje de error o solicitud original."></textarea>
+        </label>
+        <label class="field">Video de solución <span class="optional">(opcional)</span>
+          <input class="input" name="video" type="url" placeholder="https://…">
+        </label>
+        <div class="field">
+          <span>Imagen de referencia <span class="optional">(opcional)</span></span>
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Agregar imagen de referencia">
+            <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+            <div id="dropEmpty">Arrastra una imagen, pégala con <kbd>Ctrl</kbd>+<kbd>V</kbd> o <button type="button" class="link" id="pickImage">elige un archivo</button></div>
+            <div class="image-preview" id="imagePreview" hidden>
+              <img id="imagePreviewImg" alt="Vista previa de la referencia">
+              <button type="button" class="btn btn-ghost btn-xs" id="removeImage">Quitar imagen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span class="hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> para guardar</span>
+        <div class="modal-foot-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar registro</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+  <datalist id="categoryList"></datalist>
+  <datalist id="groupList"></datalist>
+
+  <!-- Ajustes -->
+  <dialog id="settings" class="modal modal-sm">
+    <form id="settingsForm">
+      <div class="modal-head">
+        <div><p class="eyebrow">Preferencias</p><h2>Ajustes</h2></div>
+        <button type="button" class="icon-btn" data-dismiss aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <label class="field">URL de ServiceNow
+          <input class="input" name="snow" type="url" placeholder="https://tu-instancia.service-now.com">
+          <small class="hint">Solo se guarda la URL en este navegador, nunca credenciales.</small>
+        </label>
+        <label class="field">Tema
+          <select class="input" name="theme">
+            <option value="system">Igual que el sistema</option>
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </select>
+        </label>
+        <div class="settings-row">
+          <div><p>Almacenamiento local</p><small id="storageText"></small></div>
+          <div class="meter meter-wide"><span id="storageMeter"></span></div>
+        </div>
+        <div class="settings-row">
+          <div><p>Registros de ejemplo eliminados</p><small><b id="hiddenCount">0</b> ocultos</small></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="restoreHidden">Restaurar</button>
+        </div>
+        <div class="settings-row">
+          <div><p>Progreso de checklists</p><small><b id="progressCount">0</b> con avance guardado</small></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="resetAllProgress">Reiniciar todo</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="modal-foot-actions">
+          <button type="button" class="btn btn-ghost" data-dismiss>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirmación -->
+  <dialog id="ask" class="modal modal-sm">
+    <div class="ask"><h2 id="askTitle"></h2><p id="askMessage"></p><div class="ask-actions" id="askActions"></div></div>
+  </dialog>
+
+  <!-- Imagen ampliada -->
+  <dialog id="lightbox" class="lightbox"><img id="lightboxImg" alt="Imagen de referencia ampliada"></dialog>
+
+  <div class="toasts" id="toasts" popover="manual" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
