@@ -4,40 +4,6 @@
    Datos base
    ========================================================================== */
 
-const SEED_ROWS = [
-  ['INC2764299','OXXO-Mx TI SopPOS.SpinbyOXXO','Error al realizar retiros con QR / sin tarjeta','Copiar la tabla TENDER de una tienda que funcione correctamente. Referencia: tienda 50T7N-CHAPALA.','Solicitan apoyo en tienda 50 por error al realizar retiros sin tarjeta de Spin.'],
-  ['INC4093079','OXXO-Mx TI SopPOS.Tipo_de_cambio','No actualiza tipo de cambio / aperturas','Ejecutar la mitigación en la caja VT1 y copiar la tabla EXCHANGE_RATE de la caja de procesos a la caja 1.','La caja 1 no actualiza automáticamente el tipo de cambio.'],
-  ['INC3022869','OXXO-Mx TI SopPOS.Performance','Retiros con tarjeta no cobran comisión','','En tienda 504EP-BEGONIAS los retiros de distintos bancos no cobran comisión y se rechazan.'],
-  ['INC3153371','OXXO-Mx TI SopPOS DAI.Dif ValdeInv/SaldoDiario','Análisis de diferencia en saldo diario','Asignar al segmento Tipo de cambio.','Tienda 50CP7-BOCANEGRA presenta una diferencia en saldo de -3155.38.'],
-  ['INC3260995','OXXO-Mx TI SopPOS.OXXOPremia','No descuenta puntos en saldo / Premia','','Error al redimir puntos: no descuenta la cantidad del total.'],
-  ['INC3974944','XPE.TI RyT NOC SC Inc Configuración por Daño de Equipo','Apoyo con activación de AP','','Cambio de AP por daño. El equipo ya fue dado de alta en EVOTI.'],
-  ['INC3895268','OXXO-Mx TI Movilidad en Tienda.Preinventarios','Categoría error movilidad','','El equipo de movilidad no guarda los preinventarios realizados.'],
-  ['INC4028880','OXXO-Mx TI Alta Servicios Telefonía','Alta teléfono','Aperturas.','Solicitud de alta de teléfonos IP para tiendas nuevas.'],
-  ['INC4093131','OXXO-Mx TI SopPOS.Performance','Cierres inesperados por Premia XPOS','',''],
-  ['INC4318614','','Preinventarios movilidad','',''],
-  ['INC4335242','','Folios para alta equipo Meraki','','Tienda próxima apertura: equipos registrados mediante EVOTI.'],
-  ['INC4421717','','Apoyo con alta para cambio dinámico Meraki','','Alta de equipos SW y RT para cambio dinámico Cisco 800 a Meraki.'],
-  ['INC4456533','','Apoyo con revisión por bloqueo de puertos TDA Mayapán','',''],
-  ['INC4540246','','Impresora de gafetes','',''],
-  ['INC4540374','','Error en actualización de equipos','',''],
-  ['INC4556086','','Alta de extensión telefónica tiendas nuevas','','Tienda 50CCP-TANAMA.'],
-  ['INC4768361','','Falla en RPD','','No respeta los rangos de retiro asignados.'],
-  ['INC4983118','','Fallo updater parches','','Solicita retiros a cantidades menores.'],
-  ['INC4559804','','Apoyo con archivo .DAT para tienda de apertura MAESERVCONFIG','',''],
-  ['INC5768197','','Error en POSMóvil al inyectar las llaves','','Llaves no encontradas. Error 500 al vincular HH con Pin Pad. Se aplicó checklist y persiste.'],
-  ['INC5655677','OXXO-Mx TI Colaboración.Office 365','Error en cuenta de PART tiendas nuevas','Generar folio a Colaboración 360 para reinicio de contraseña.','Tienda nueva sin acceso al Portal de aplicaciones.'],
-  ['INC8236249','OXXO-MX TI RMS16.Folios POS','Error en foliadores de tiendas, RMS folios POS','Apoyo con información de foliador de tienda Maldonado.','Posterior a truene de disco se perdió la información del foliador.'],
-  ['INC8249864','OXXO-Mx TI SopPOS.Actualizar_Folios_de_Mov','Actualizar foliadores retransición sin respaldo','','Retransición sin respaldo en caja de procesos.'],
-  ['CHECK LIST TRUENE DISCO','DETENER CEDIS','Checklist truene de disco','Foliadores\nReenvío de catálogos, promociones y precios\nDetener CEDIS\nEnviar inventario\nActivar recolección total','Reenvío de catálogos, promociones y precios. Detener CEDIS, enviar inventario y activar recolección total.'],
-  ['CHECK LIST APERTURAS','APERTURAS','Checklist aperturas','Transición y planchado\nAsignación de red\nAsegurar precios, promociones y catálogos\nAltas SW, RT, AP, HH, TT\nAlta de teléfono IP\nRed y segmentación\nMovilidad','Altas SW, RT, AP, HH, TT, teléfono IP, red, segmentación, movilidad.'],
-  ['INC11473557','OXXO-Mx TI Soporte Xmonitor.Tienda no visible','Tienda no se ve en Xmonitor: próxima apertura','','']
-];
-
-// Los ids `seed-N` se mantienen estables para respetar ediciones guardadas por versiones anteriores.
-const SEED = SEED_ROWS.map(([folio, categoria, descripcion, solucion, dialogo], i) =>
-  ({ id: `seed-${i}`, folio, categoria, descripcion, solucion, dialogo, video: '', createdAt: -i }));
-const SEED_IDS = new Set(SEED.map(s => s.id));
-
 const TEXT_FIELDS = ['folio', 'categoria', 'grupo', 'descripcion', 'solucion', 'dialogo', 'video'];
 const TYPES = ['documentada', 'informativa', 'pendiente'];
 const TYPE_INFO = {
@@ -54,7 +20,7 @@ const VIEWS = {
 const THEMES = { system: '◐ Tema: sistema', light: '☀ Tema: claro', dark: '☾ Tema: oscuro' };
 const KEYS = {
   custom: 'kbd-custom', hidden: 'kbd-hidden', pinned: 'kbd-pinned', progress: 'kbd-progress',
-  snow: 'kbd-servicenow-base', theme: 'kbd-theme', sort: 'kbd-sort'
+  runs: 'kbd-runs', snow: 'kbd-servicenow-base', theme: 'kbd-theme', sort: 'kbd-sort'
 };
 
 /* ==========================================================================
@@ -70,6 +36,9 @@ const isSafeImage = u => /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(u || 
 const uid = () => `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const formatDate = ts => ts > 0 ? new Date(ts).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Base inicial';
+const formatDateTime = ts => Number.isFinite(ts)
+  ? new Date(ts).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  : 'Sin fecha';
 const formatBytes = b => b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
 
 const store = {
@@ -94,11 +63,18 @@ const store = {
    Estado
    ========================================================================== */
 
+// La base compartida llega desde data/registros.js, que se publica en el repositorio.
+// Los ids se mantienen estables para respetar las ediciones locales de cada persona.
+const BASE_DATA = (typeof window !== 'undefined' && window.KBD_BASE) || {};
+const BASE = sanitizeBase(BASE_DATA.entries);
+const BASE_IDS = new Set(BASE.map(e => e.id));
+
 const state = {
   custom: sanitizeEntries(store.get(KEYS.custom, [])),
   hidden: new Set(stringList(store.get(KEYS.hidden, []))),
   pinned: new Set(stringList(store.get(KEYS.pinned, []))),
   progress: sanitizeProgress(store.get(KEYS.progress, {})),
+  runs: {},
   view: 'library',
   status: '',
   selectedId: null,
@@ -118,6 +94,62 @@ function sanitizeProgress(v) {
   }
   return out;
 }
+
+// Base compartida: entradas sin id o sin contenido se descartan; el orden del archivo marca la antigüedad.
+function sanitizeBase(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  return list.filter(x => x && typeof x === 'object' && typeof x.id === 'string' && x.id).map((x, i) => {
+    const e = { id: x.id, createdAt: Number.isFinite(x.createdAt) ? x.createdAt : -i };
+    for (const k of TEXT_FIELDS) e[k] = typeof x[k] === 'string' ? x[k] : '';
+    if (x.clase === 'checklist' || x.clase === 'solucion') e.clase = x.clase;
+    if (TYPES.includes(x.tipo)) e.tipo = x.tipo;
+    if (isSafeImage(x.imagen)) e.imagen = x.imagen;
+    if (e.video && !isSafeUrl(e.video)) e.video = '';
+    return e;
+  }).filter(e => {
+    if (seen.has(e.id) || !(e.folio || e.descripcion)) return false;
+    seen.add(e.id);
+    return true;
+  });
+}
+
+// Ejecuciones de checklists: { [id]: { activa: {inicio, pasos}, historial: [...] } }
+function sanitizeRuns(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  const steps = s => Array.isArray(s) ? [...new Set(s.filter(Number.isInteger))].sort((a, b) => a - b) : [];
+  const out = {};
+  for (const [id, data] of Object.entries(v)) {
+    if (!data || typeof data !== 'object') continue;
+    const activa = data.activa && typeof data.activa === 'object'
+      ? { inicio: Number.isFinite(data.activa.inicio) ? data.activa.inicio : Date.now(), pasos: steps(data.activa.pasos) }
+      : null;
+    const historial = (Array.isArray(data.historial) ? data.historial : []).filter(r => r && typeof r === 'object').map(r => ({
+      id: typeof r.id === 'string' && r.id ? r.id : uid(),
+      inicio: Number.isFinite(r.inicio) ? r.inicio : null,
+      fin: Number.isFinite(r.fin) ? r.fin : Date.now(),
+      responsable: typeof r.responsable === 'string' ? r.responsable : '',
+      tienda: typeof r.tienda === 'string' ? r.tienda : '',
+      notas: typeof r.notas === 'string' ? r.notas : '',
+      pasos: steps(r.pasos),
+      total: Number.isInteger(r.total) ? r.total : steps(r.pasos).length
+    })).sort((a, b) => b.fin - a.fin);
+    if (activa || historial.length) out[id] = { activa, historial };
+  }
+  return out;
+}
+
+// Las versiones anteriores guardaban un único avance por checklist: pasa a ser la ejecución en curso.
+function loadRuns() {
+  const runs = sanitizeRuns(store.get(KEYS.runs, null));
+  if (Object.keys(runs).length) return runs;
+  for (const [id, pasos] of Object.entries(state.progress)) {
+    if (pasos.length) runs[id] = { activa: { inicio: Date.now(), pasos }, historial: [] };
+  }
+  return runs;
+}
+
+const runsOf = e => state.runs[e.id] || { activa: null, historial: [] };
 
 function sanitizeEntries(list) {
   if (!Array.isArray(list)) return [];
@@ -142,7 +174,10 @@ function sanitizeEntries(list) {
 }
 
 function snapshot() {
-  return { custom: [...state.custom], hidden: new Set(state.hidden), pinned: new Set(state.pinned), progress: structuredClone(state.progress) };
+  return {
+    custom: [...state.custom], hidden: new Set(state.hidden), pinned: new Set(state.pinned),
+    progress: structuredClone(state.progress), runs: structuredClone(state.runs)
+  };
 }
 function restore(snap) { Object.assign(state, snap); }
 
@@ -150,7 +185,8 @@ function persistAll() {
   return store.set(KEYS.custom, state.custom)
     && store.set(KEYS.hidden, [...state.hidden])
     && store.set(KEYS.pinned, [...state.pinned])
-    && store.set(KEYS.progress, state.progress);
+    && store.set(KEYS.progress, state.progress)
+    && store.set(KEYS.runs, state.runs);
 }
 
 /* ==========================================================================
@@ -159,7 +195,7 @@ function persistAll() {
 
 function allEntries() {
   const overridden = new Set(state.custom.map(e => e.originalId || e.id));
-  return [...state.custom, ...SEED.filter(s => !overridden.has(s.id) && !state.hidden.has(s.id))];
+  return [...state.custom, ...BASE.filter(s => !overridden.has(s.id) && !state.hidden.has(s.id))];
 }
 const currentEntry = () => allEntries().find(e => e.id === state.selectedId) || null;
 
@@ -184,7 +220,7 @@ function stepsOf(e) {
 
 function doneSteps(e) {
   const total = stepsOf(e).length;
-  return new Set((state.progress[e.id] || []).filter(i => i < total));
+  return new Set((runsOf(e).activa?.pasos || []).filter(i => i < total));
 }
 
 function inView(e, view) {
@@ -401,11 +437,16 @@ function checklistSection(e) {
   if (!steps.length) {
     return textSection('Pasos', '', { empty: 'Este checklist aún no tiene pasos. Edita el registro y escribe un paso por línea.' });
   }
+  const { activa, historial } = runsOf(e);
   const done = doneSteps(e), pct = Math.round(done.size / steps.length * 100);
   return `<section class="record-section">
     <div class="section-head">
       <h3>Pasos</h3><span class="progress-text">${done.size}/${steps.length}</span>
-      <button type="button" class="btn btn-ghost btn-xs" data-act="reset-progress"${done.size ? '' : ' disabled'}>Reiniciar</button>
+      ${activa
+        ? `<span class="run-since">En curso desde ${formatDateTime(activa.inicio)}</span>
+           <button type="button" class="btn btn-ghost btn-xs" data-act="cancel-run">Cancelar</button>
+           <button type="button" class="btn btn-primary btn-xs" data-act="finish-run">Finalizar ejecución</button>`
+        : '<span class="run-since">Marca un paso para iniciar una ejecución</span>'}
     </div>
     <div class="meter meter-lg"><span style="width:${pct}%"></span></div>
     <ol class="steps">${steps.map((s, i) => `
@@ -414,7 +455,27 @@ function checklistSection(e) {
         <span class="step-num">${i + 1}</span><span class="step-text">${esc(s)}</span>
       </label></li>`).join('')}
     </ol>
-    ${done.size === steps.length ? '<div class="checklist-done">✓ Checklist completado</div>' : ''}
+    ${done.size === steps.length ? '<div class="checklist-done">✓ Todos los pasos marcados. Finaliza la ejecución para guardarla en la bitácora.</div>' : ''}
+  </section>
+  ${historySection(historial)}`;
+}
+
+function historySection(historial) {
+  if (!historial.length) return '';
+  return `<section class="record-section">
+    <div class="section-head"><h3>Bitácora de ejecuciones</h3><span class="progress-text">${historial.length}</span></div>
+    <ul class="runs">${historial.map(r => {
+      const completa = r.total && r.pasos.length === r.total;
+      return `<li class="run">
+        <div class="run-head">
+          <span class="run-date">${formatDateTime(r.fin)}</span>
+          <span class="badge ${completa ? 'badge-documentada' : 'badge-pendiente'}">${r.pasos.length}/${r.total || '?'}</span>
+          <button type="button" class="copy-btn" data-act="delete-run" data-run="${esc(r.id)}" title="Eliminar de la bitácora" aria-label="Eliminar de la bitácora">×</button>
+        </div>
+        <div class="run-meta">${[r.responsable && `Responsable: ${r.responsable}`, r.tienda && `Tienda: ${r.tienda}`].filter(Boolean).map(esc).join(' · ') || 'Sin responsable registrado'}</div>
+        ${r.notas ? `<div class="run-notes">${esc(r.notas)}</div>` : ''}
+      </li>`;
+    }).join('')}</ul>
   </section>`;
 }
 
@@ -533,32 +594,87 @@ function togglePin(e) {
   toast(state.pinned.has(e.id) ? `${e.folio || 'Registro'} fijado.` : `${e.folio || 'Registro'} ya no está fijado.`);
 }
 
+// Marcar un paso abre la ejecución si no había ninguna en curso.
 function toggleStep(e, index, checked) {
-  const done = doneSteps(e);
+  const run = state.runs[e.id] || (state.runs[e.id] = { activa: null, historial: [] });
+  if (!run.activa) run.activa = { inicio: Date.now(), pasos: [] };
+  const done = new Set(run.activa.pasos);
   checked ? done.add(index) : done.delete(index);
-  if (done.size) state.progress[e.id] = [...done].sort((a, b) => a - b);
-  else delete state.progress[e.id];
-  store.set(KEYS.progress, state.progress);
+  run.activa.pasos = [...done].sort((a, b) => a - b);
+  store.set(KEYS.runs, state.runs);
   render();
   $(`[data-step="${index}"]`)?.focus();
-  if (checked && done.size === stepsOf(e).length) toast('¡Checklist completado!');
+  if (checked && done.size === stepsOf(e).length) toast('Todos los pasos marcados. Finaliza la ejecución para guardarla.');
 }
 
-function resetProgress(e) {
-  const prev = state.progress[e.id];
-  delete state.progress[e.id];
-  store.set(KEYS.progress, state.progress);
+function cancelRun(e) {
+  const snap = snapshot();
+  const run = state.runs[e.id];
+  if (!run?.activa) return;
+  run.activa = null;
+  if (!run.historial.length) delete state.runs[e.id];
+  store.set(KEYS.runs, state.runs);
   render();
-  toast('Progreso reiniciado.', { action: { label: 'Deshacer', run() { state.progress[e.id] = prev; store.set(KEYS.progress, state.progress); render(); } } });
+  toast('Ejecución cancelada.', { action: { label: 'Deshacer', run() { restore(snap); store.set(KEYS.runs, state.runs); render(); } } });
+}
+
+function finishRun(e) {
+  const run = state.runs[e.id];
+  if (!run?.activa) return;
+  const f = $('#runForm');
+  f.reset();
+  const steps = stepsOf(e), done = doneSteps(e);
+  $('#runSummary').textContent = `${e.folio || 'Checklist'} · ${done.size} de ${steps.length} pasos · iniciada el ${formatDateTime(run.activa.inicio)}`;
+  f.dataset.entry = e.id;
+  $('#runDialog').showModal();
+  f.elements.responsable.focus();
+}
+
+function saveRun(ev) {
+  ev.preventDefault();
+  const f = ev.currentTarget;
+  const e = allEntries().find(x => x.id === f.dataset.entry);
+  const run = e && state.runs[e.id];
+  if (!run?.activa) { $('#runDialog').close(); return; }
+  const data = Object.fromEntries(new FormData(f));
+  run.historial.unshift({
+    id: uid(),
+    inicio: run.activa.inicio,
+    fin: Date.now(),
+    responsable: String(data.responsable || '').trim(),
+    tienda: String(data.tienda || '').trim(),
+    notas: String(data.notas || '').trim(),
+    pasos: [...run.activa.pasos],
+    total: stepsOf(e).length
+  });
+  run.activa = null;
+  store.set(KEYS.runs, state.runs);
+  $('#runDialog').close();
+  render();
+  toast('Ejecución guardada en la bitácora.');
+}
+
+function deleteRun(e, runId) {
+  const snap = snapshot();
+  const run = state.runs[e.id];
+  if (!run) return;
+  run.historial = run.historial.filter(r => r.id !== runId);
+  if (!run.activa && !run.historial.length) delete state.runs[e.id];
+  store.set(KEYS.runs, state.runs);
+  render();
+  toast('Ejecución eliminada de la bitácora.', {
+    action: { label: 'Deshacer', run() { restore(snap); store.set(KEYS.runs, state.runs); render(); } }
+  });
 }
 
 function removeEntry(e) {
   const snap = snapshot();
   const baseId = e.originalId || e.id;
   state.custom = state.custom.filter(x => x.id !== e.id);
-  if (SEED_IDS.has(baseId)) state.hidden.add(baseId);
+  if (BASE_IDS.has(baseId)) state.hidden.add(baseId);
   state.pinned.delete(e.id);
   delete state.progress[e.id];
+  delete state.runs[e.id];
   if (!persistAll()) { restore(snap); return; }
   select(null);
   toast(`Se eliminó ${e.folio || 'el registro'}.`, {
@@ -574,6 +690,12 @@ function snowText(e) {
   if (classOf(e) === 'checklist') {
     const steps = stepsOf(e), done = doneSteps(e);
     if (steps.length) lines.push('', `Checklist (${done.size}/${steps.length}):`, ...steps.map((s, i) => `[${done.has(i) ? 'x' : ' '}] ${s}`));
+    const ultima = runsOf(e).historial[0];
+    if (ultima) {
+      const quien = [ultima.responsable, ultima.tienda].filter(Boolean).join(' · ');
+      lines.push('', `Última ejecución: ${formatDateTime(ultima.fin)} (${ultima.pasos.length}/${ultima.total})${quien ? ` · ${quien}` : ''}`);
+      if (ultima.notas) lines.push(`Notas: ${ultima.notas}`);
+    }
   } else if (e.solucion) {
     lines.push('', typeOf(e) === 'informativa' ? 'Referencia de escalamiento:' : 'Solución aplicada:', e.solucion.trim());
   }
@@ -849,7 +971,8 @@ function saveEntry(ev) {
 function exportBackup() {
   const payload = {
     app: 'KBD', version: 2, exportedAt: new Date().toISOString(),
-    entries: state.custom, hidden: [...state.hidden], pinned: [...state.pinned], progress: state.progress
+    entries: state.custom, hidden: [...state.hidden], pinned: [...state.pinned],
+    progress: state.progress, runs: state.runs
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
   const a = Object.assign(document.createElement('a'), { href: url, download: `kbd-respaldo-${new Date().toISOString().slice(0, 10)}.json` });
@@ -885,6 +1008,7 @@ async function importBackup(file) {
     state.hidden = new Set(stringList(extra.hidden));
     state.pinned = new Set(stringList(extra.pinned));
     state.progress = sanitizeProgress(extra.progress);
+    state.runs = sanitizeRuns(extra.runs);
   } else {
     const byKey = new Map(state.custom.map(e => [e.originalId || e.id, e]));
     for (const e of entries) byKey.set(e.originalId || e.id, e);
@@ -892,6 +1016,13 @@ async function importBackup(file) {
     stringList(extra.hidden).forEach(id => state.hidden.add(id));
     stringList(extra.pinned).forEach(id => state.pinned.add(id));
     Object.assign(state.progress, sanitizeProgress(extra.progress));
+    // Las ejecuciones se suman por checklist, sin repetir las que ya estaban.
+    for (const [id, data] of Object.entries(sanitizeRuns(extra.runs))) {
+      const run = state.runs[id] || (state.runs[id] = { activa: null, historial: [] });
+      run.activa = run.activa || data.activa;
+      const vistos = new Set(run.historial.map(r => r.id));
+      run.historial = [...run.historial, ...data.historial.filter(r => !vistos.has(r.id))].sort((a, b) => b.fin - a.fin);
+    }
   }
   if (!persistAll()) { restore(snap); persistAll(); return; }
 
@@ -917,9 +1048,43 @@ function refreshSettingsInfo() {
   $('#storageMeter').style.width = `${Math.min(100, bytes / (5 * 1024 * 1024) * 100)}%`;
   $('#hiddenCount').textContent = state.hidden.size;
   $('#restoreHidden').disabled = !state.hidden.size;
-  const withProgress = Object.keys(state.progress).length;
-  $('#progressCount').textContent = withProgress;
-  $('#resetAllProgress').disabled = !withProgress;
+  const activas = Object.values(state.runs).filter(r => r.activa).length;
+  const registradas = Object.values(state.runs).reduce((n, r) => n + r.historial.length, 0);
+  $('#runsActive').textContent = activas;
+  $('#runsLogged').textContent = registradas;
+  $('#resetAllProgress').disabled = !activas;
+  $('#baseCount').textContent = BASE.length;
+  $('#baseDate').textContent = BASE_DATA.actualizado || 'sin fecha';
+}
+
+// Genera el archivo data/registros.js con la base más las aportaciones locales, listo para subir al repositorio.
+function exportBase() {
+  const entries = allEntries()
+    .slice()
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .map(e => {
+      const out = { id: e.id, clase: classOf(e), tipo: typeOf(e) };
+      for (const k of TEXT_FIELDS) if (e[k]) out[k] = e[k];
+      if (e.imagen) out.imagen = e.imagen;
+      if (Number.isFinite(e.createdAt)) out.createdAt = e.createdAt;
+      if (Number.isFinite(e.updatedAt)) out.updatedAt = e.updatedAt;
+      return out;
+    });
+  const payload = { version: 1, actualizado: new Date().toISOString().slice(0, 10), entries };
+  const file = `/* Base compartida del equipo.
+   Esta es la información que todos ven al abrir la aplicación.
+   Para publicar cambios: Ajustes → "Generar archivo de la base", reemplaza este
+   archivo con el que se descarga y súbelo al repositorio. */
+
+window.KBD_BASE = ${JSON.stringify(payload, null, 2)};
+`;
+  const url = URL.createObjectURL(new Blob([file], { type: 'application/javascript' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'registros.js' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`Archivo generado con ${plural(entries.length, 'registro', 'registros')}. Reemplaza data/registros.js en el repositorio.`);
 }
 
 function openSettings(focus) {
@@ -1030,7 +1195,9 @@ function bindEvents() {
       case 'edit': openEntryModal(e); break;
       case 'duplicate': openEntryModal(e, { duplicate: true }); break;
       case 'delete': removeEntry(e); break;
-      case 'reset-progress': resetProgress(e); break;
+      case 'cancel-run': cancelRun(e); break;
+      case 'finish-run': finishRun(e); break;
+      case 'delete-run': deleteRun(e, btn.dataset.run); break;
       case 'zoom': openLightbox(e.imagen); break;
     }
   });
@@ -1097,15 +1264,23 @@ function bindEvents() {
     toast(`Se restauraron ${plural(n, 'registro', 'registros')} de ejemplo.`);
   });
   $('#resetAllProgress').addEventListener('click', () => {
-    const prev = state.progress;
-    state.progress = {};
-    store.set(KEYS.progress, state.progress);
+    const snap = snapshot();
+    for (const [id, run] of Object.entries(state.runs)) {
+      run.activa = null;
+      if (!run.historial.length) delete state.runs[id];
+    }
+    store.set(KEYS.runs, state.runs);
     refreshSettingsInfo();
     render();
-    toast('Se reinició el progreso de todos los checklists.', {
-      action: { label: 'Deshacer', run() { state.progress = prev; store.set(KEYS.progress, prev); render(); } }
+    toast('Se cancelaron las ejecuciones en curso. La bitácora se conserva.', {
+      action: { label: 'Deshacer', run() { restore(snap); store.set(KEYS.runs, state.runs); refreshSettingsInfo(); render(); } }
     });
   });
+  $('#exportBase').addEventListener('click', exportBase);
+
+  // Bitácora
+  $('#runForm').addEventListener('submit', saveRun);
+  $$('[data-dismiss]', $('#runDialog')).forEach(b => b.addEventListener('click', () => $('#runDialog').close()));
 
   $('#lightbox').addEventListener('click', () => $('#lightbox').close());
 
@@ -1163,10 +1338,15 @@ function selectFromHash() {
    ========================================================================== */
 
 (function init() {
+  state.runs = loadRuns();
+  store.set(KEYS.runs, state.runs);
   applyTheme(store.raw(KEYS.theme) || 'system');
   const sort = store.raw(KEYS.sort);
   if (['relevance', 'recent', 'folio'].includes(sort)) $('#sort').value = sort;
   bindEvents();
   selectFromHash();
   render();
+  if (!BASE.length) {
+    toast('No se pudo cargar la base compartida (data/registros.js). Solo verás tus registros locales.', { kind: 'error' });
+  }
 })();

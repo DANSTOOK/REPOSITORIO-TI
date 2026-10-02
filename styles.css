@@ -280,6 +280,14 @@ button.stat:hover { border-color: var(--brand); }
 .step-text { flex: 1; font-size: 13px; line-height: 1.45; }
 .step.is-done { background: var(--done-bg); border-color: transparent; }
 .step.is-done .step-text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--faint); }
+.run-since { font-size: 11px; color: var(--muted); font-weight: 600; }
+.section-head .run-since + .btn { margin-left: auto; }
+.runs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.run { padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+.run-head { display: flex; align-items: center; gap: 8px; }
+.run-date { flex: 1; font: 500 11.5px var(--mono); color: var(--ink-2); }
+.run-meta { margin-top: 4px; font-size: 11.5px; color: var(--muted); }
+.run-notes { margin-top: 6px; padding: 7px 9px; border-radius: 7px; background: var(--surface); border: 1px solid var(--line); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .checklist-done { margin-top: 10px; padding: 9px 12px; border-radius: 9px; background: var(--done-bg); color: var(--done); font-weight: 700; font-size: 12.5px; }
 
 .record-image { display: block; padding: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); overflow: hidden; cursor: zoom-in; max-width: 100%; }

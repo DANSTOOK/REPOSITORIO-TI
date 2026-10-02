@@ -176,8 +176,12 @@
           <button type="button" class="btn btn-ghost btn-sm" id="restoreHidden">Restaurar</button>
         </div>
         <div class="settings-row">
-          <div><p>Progreso de checklists</p><small><b id="progressCount">0</b> con avance guardado</small></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="resetAllProgress">Reiniciar todo</button>
+          <div><p>Ejecuciones de checklists</p><small><b id="runsActive">0</b> en curso · <b id="runsLogged">0</b> en la bitácora</small></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="resetAllProgress">Cancelar en curso</button>
+        </div>
+        <div class="settings-row">
+          <div><p>Base compartida del equipo</p><small><b id="baseCount">0</b> registros · actualizada el <b id="baseDate">—</b></small></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="exportBase">Generar archivo</button>
         </div>
       </div>
       <div class="modal-foot">
@@ -185,6 +189,33 @@
         <div class="modal-foot-actions">
           <button type="button" class="btn btn-ghost" data-dismiss>Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Cierre de una ejecución de checklist -->
+  <dialog id="runDialog" class="modal modal-sm">
+    <form id="runForm">
+      <div class="modal-head">
+        <div><p class="eyebrow">Bitácora</p><h2>Finalizar ejecución</h2></div>
+        <button type="button" class="icon-btn" data-dismiss aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" id="runSummary"></p>
+        <div class="form-grid">
+          <label class="field">Responsable<input class="input" name="responsable" placeholder="Quién la ejecutó"></label>
+          <label class="field">Tienda o equipo<input class="input" name="tienda" placeholder="Ej. 50CCP-TANAMA"></label>
+        </div>
+        <label class="field">Notas <span class="optional">(opcional)</span>
+          <textarea class="input" name="notas" rows="3" placeholder="Pendientes, incidencias encontradas o detalles de la ejecución."></textarea>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div class="modal-foot-actions">
+          <button type="button" class="btn btn-ghost" data-dismiss>Seguir marcando</button>
+          <button type="submit" class="btn btn-primary">Guardar en la bitácora</button>
         </div>
       </div>
     </form>
@@ -200,6 +231,7 @@
 
   <div class="toasts" id="toasts" popover="manual" aria-live="polite"></div>
 
+  <script src="data/registros.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

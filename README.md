@@ -7,7 +7,8 @@ Base de conocimiento para soporte de TI: soluciones de incidencias y checklists 
 ## Qué hace
 
 - **Soluciones e incidencias:** cada registro guarda folio, categoría, grupo de asignación, la solución y el contexto original.
-- **Checklists operativos:** los pasos se marcan con casillas y el avance se guarda en el navegador.
+- **Base compartida:** todos abren la misma información, publicada en el repositorio.
+- **Checklists con bitácora:** los pasos se marcan con casillas y cada ejecución queda registrada con fecha, responsable, tienda y notas.
 - **Búsqueda por relevancia:** ignora acentos, acepta varias palabras y resalta las coincidencias, incluso dentro de la solución.
 - **Filtros:** por categoría y por estado (documentada, informativa o pendiente).
 - **Copiar para ServiceNow:** arma un texto con folio, categoría, solución y pasos marcados, listo para pegar en las notas de trabajo.
@@ -34,9 +35,27 @@ Base de conocimiento para soporte de TI: soluciones de incidencias y checklists 
 
 Para abrir un registro directamente: `index.html#INC4093079`.
 
+## La base compartida del equipo
+
+`data/registros.js` es la información que todos ven al abrir la aplicación. Es el único archivo que hay que tocar para actualizar el conocimiento del equipo:
+
+1. Documenta o corrige lo que haga falta dentro de la aplicación, como siempre.
+2. Entra a **Ajustes → Base compartida → Generar archivo**. Se descarga un `registros.js` con la base más todo lo que agregaste.
+3. Reemplaza `data/registros.js` con ese archivo y súbelo al repositorio.
+
+En unos minutos el sitio se actualiza y el resto del equipo ve los cambios la próxima vez que abra la aplicación.
+
+Los ids de cada registro se conservan, así que las notas y ediciones locales de cada persona siguen funcionando después de una actualización. Si alguien ya había editado por su cuenta un registro que luego se publica, seguirá viendo su versión; puede eliminarla para volver a la del equipo y restaurarla desde *Ajustes → Restaurar*.
+
+## Bitácora de checklists
+
+Al marcar el primer paso de un checklist se abre una ejecución. Cuando terminas, **Finalizar ejecución** la guarda con la fecha, el responsable, la tienda y las notas, y queda en la bitácora del registro. El botón *Copiar para ServiceNow* incluye la última ejecución.
+
+La bitácora es local de cada persona, igual que el resto de los datos del navegador, y viaja en los respaldos.
+
 ## Dónde se guardan los datos
 
-Todo se guarda en el `localStorage` del navegador de cada persona. **No hay servidor ni base de datos compartida**, así que los registros no se sincronizan entre computadoras ni entre navegadores: para pasarlos a otro equipo usa *Exportar respaldo* e *Importar respaldo*.
+La base del equipo viene del repositorio; lo que cada persona agrega o edita se guarda solo en el `localStorage` de su navegador. **No hay servidor ni base de datos en vivo**, así que esos cambios personales no se sincronizan solos: para compartirlos con el equipo se publica la base (ver arriba), y para pasarlos a otra computadora se usan *Exportar respaldo* e *Importar respaldo*.
 
 De la URL de ServiceNow solo se guarda la dirección de la instancia. La aplicación nunca pide ni almacena credenciales.
 
@@ -48,7 +67,8 @@ Los registros que trae la aplicación de fábrica son ejemplos de referencia. Si
 | --- | --- |
 | `index.html` | Estructura de la página y los diálogos |
 | `styles.css` | Estilos, variables de color y diseño adaptable |
-| `app.js` | Datos de ejemplo, búsqueda, almacenamiento y toda la lógica |
+| `app.js` | Búsqueda, almacenamiento, bitácora y toda la lógica |
+| `data/registros.js` | La base compartida del equipo |
 
 No usa dependencias ni proceso de compilación. Solo carga las tipografías Manrope y DM Mono desde Google Fonts; sin conexión usa las del sistema.
 
