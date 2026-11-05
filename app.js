@@ -151,6 +151,39 @@ function loadRuns() {
 
 const runsOf = e => state.runs[e.id] || { activa: null, historial: [] };
 
+/* ---------- Origen: base del equipo o cambios locales ---------- */
+
+const BASE_BY_ID = new Map(BASE.map(e => [e.id, e]));
+const baseIdOf = e => e.originalId || e.id;
+const isCustom = e => state.custom.some(x => x.id === e.id);
+
+// 'equipo' viene tal cual de data/registros.js; 'editada' es una versión local de un registro del equipo;
+// 'local' existe solo en este navegador.
+function originOf(e) {
+  if (!isCustom(e)) return 'equipo';
+  return BASE_BY_ID.has(baseIdOf(e)) ? 'editada' : 'local';
+}
+
+function sameContent(a, b) {
+  return TEXT_FIELDS.every(k => (a[k] || '').trim() === (b[k] || '').trim())
+    && classOf(a) === classOf(b) && typeOf(a) === typeOf(b) && (a.imagen || '') === (b.imagen || '');
+}
+
+// Cuando el equipo publica una base que ya incluye tus cambios, la copia local sobra y además
+// taparía futuras actualizaciones. Se quitan las que son idénticas a la versión publicada.
+function pruneSynced() {
+  const before = state.custom.length;
+  state.custom = state.custom.filter(c => {
+    const b = BASE_BY_ID.get(baseIdOf(c));
+    return !(b && sameContent(c, b));
+  });
+  const n = before - state.custom.length;
+  if (n) store.set(KEYS.custom, state.custom);
+  return n;
+}
+
+const unpublishedCount = () => state.custom.length;
+
 function sanitizeEntries(list) {
   if (!Array.isArray(list)) return [];
   const seen = new Set();
@@ -379,7 +412,10 @@ function cardHtml(e, terms) {
   const badge = checklist
     ? '<span class="badge badge-checklist">Checklist</span>'
     : `<span class="badge badge-${type}">${TYPE_INFO[type].label}</span>`;
+  const origin = originOf(e);
   const icons = [
+    origin === 'local' ? '<span class="card-origin" title="Solo en tu navegador: aún no está en la base del equipo">●</span>' : '',
+    origin === 'editada' ? '<span class="card-origin" title="Editado en tu navegador: difiere de la base del equipo">✎</span>' : '',
     state.pinned.has(e.id) ? '<span class="card-pin" title="Fijado">★</span>' : '',
     e.imagen ? '<span title="Incluye imagen">▣</span>' : '',
     isSafeUrl(e.video) ? '<span title="Incluye video">▶</span>' : ''
@@ -424,12 +460,63 @@ function fieldView(label, value, { wide = false, copy = true } = {}) {
   </div>`;
 }
 
+// Escapa el texto y convierte en enlace las direcciones http(s) que aparezcan en él.
+function linkify(text) {
+  return String(text ?? '').split(/(https?:\/\/[^\s<>"']+)/gi).map((part, i) => {
+    if (!(i % 2) || !isSafeUrl(part)) return esc(part);
+    const url = part.replace(/[.,;:!?)\]]+$/, ''), tail = part.slice(url.length);
+    return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>${esc(tail)}`;
+  }).join('');
+}
+
 function textSection(title, text, { tone = '', empty = '' } = {}) {
   const v = String(text ?? '').trim();
   return `<section class="record-section">
     <div class="section-head"><h3>${title}</h3>${v ? copyBtn(v) : ''}</div>
-    <div class="record-text ${tone}${v ? '' : ' is-blank'}">${esc(v || empty)}</div>
+    <div class="record-text ${tone}${v ? '' : ' is-blank'}">${v ? linkify(v) : esc(empty)}</div>
   </section>`;
+}
+
+/* ---------- Relacionados ---------- */
+
+const STOPWORDS = new Set('de la el en y a con por para del los las al se un una no sin que es su tienda tiendas error apoyo'.split(' '));
+const wordsOf = e => new Set(norm(e.descripcion).split(/[^a-z0-9ñ]+/).filter(w => w.length > 2 && !STOPWORDS.has(w)));
+
+function relatedOf(e, entries) {
+  const words = wordsOf(e), group = groupOf(e), clase = classOf(e);
+  return entries.filter(x => x.id !== e.id && classOf(x) === clase).map(x => {
+    let s = 0;
+    if (e.categoria && x.categoria === e.categoria) s += 3;
+    else if (group && groupOf(x) === group) s += 1;
+    for (const w of wordsOf(x)) if (words.has(w)) s += 2;
+    return { x, s };
+  }).filter(r => r.s >= 2).sort((a, b) => b.s - a.s || typeOf(a.x).localeCompare(typeOf(b.x))).slice(0, 4).map(r => r.x);
+}
+
+function relatedSection(e, entries) {
+  const list = relatedOf(e, entries);
+  if (!list.length) return '';
+  return `<section class="record-section">
+    <div class="section-head"><h3>Relacionados</h3></div>
+    <ul class="related">${list.map(x => {
+      const t = typeOf(x);
+      return `<li><button type="button" data-act="open-related" data-id="${esc(x.id)}">
+        <span class="folio">${esc(x.folio || 'SIN FOLIO')}</span>
+        <span class="related-title">${esc(x.descripcion || 'Sin descripción')}</span>
+        ${classOf(x) === 'checklist' ? '' : `<span class="badge badge-${t}">${TYPE_INFO[t].label}</span>`}
+      </button></li>`;
+    }).join('')}</ul>
+  </section>`;
+}
+
+function originNotice(e) {
+  const origin = originOf(e);
+  if (origin === 'equipo') return '';
+  return origin === 'editada'
+    ? `<div class="notice"><span>✎ Tienes una versión local de este registro. El resto del equipo ve la versión publicada.</span>
+        <button type="button" class="btn btn-ghost btn-xs" data-act="revert">Volver a la versión del equipo</button></div>`
+    : `<div class="notice"><span>● Este registro solo existe en tu navegador. Publícalo desde Ajustes → Base compartida para que lo vea el equipo.</span>
+        <button type="button" class="btn btn-ghost btn-xs" data-act="publish-info">Cómo publicar</button></div>`;
 }
 
 function checklistSection(e) {
@@ -530,6 +617,7 @@ function renderDetail(entries) {
       <button type="button" class="btn btn-primary btn-sm" data-act="edit">Editar</button>
     </div>
 
+    ${originNotice(e)}
     ${main}
     ${textSection('Comentarios / contexto', e.dialogo, { empty: 'No se agregó un comentario para este folio.' })}
     ${e.imagen && isSafeImage(e.imagen) ? `<section class="record-section"><div class="section-head"><h3>Imagen de referencia</h3></div>
@@ -543,7 +631,9 @@ function renderDetail(entries) {
       ${fieldView('Clase', checklist ? 'Checklist operativo' : 'Solución / incidencia', { copy: false })}
       ${fieldView('Registrado', formatDate(e.createdAt), { copy: false })}
       ${fieldView('Última edición', e.updatedAt ? formatDate(e.updatedAt) : 'Sin cambios', { copy: false })}
+      ${fieldView('Origen', { equipo: 'Base del equipo', editada: 'Editado en tu navegador', local: 'Solo en tu navegador' }[originOf(e)], { copy: false })}
     </div>
+    ${relatedSection(e, entries)}
   </article>`;
 }
 
@@ -680,6 +770,33 @@ function removeEntry(e) {
   toast(`Se eliminó ${e.folio || 'el registro'}.`, {
     action: { label: 'Deshacer', run() { restore(snap); persistAll(); select(e.id, { scroll: true }); } }
   });
+}
+
+// Descarta la versión local de un registro del equipo; el id se conserva, así que fijados y bitácora siguen igual.
+async function revertEntry(e) {
+  const ok = await ask({
+    title: '¿Volver a la versión del equipo?',
+    message: `Se descartarán tus cambios locales en ${e.folio || 'este registro'} y verás la versión publicada en la base compartida.`,
+    actions: [{ label: 'Cancelar', value: false }, { label: 'Descartar mis cambios', value: true, kind: 'danger' }]
+  });
+  if (!ok) return;
+  const snap = snapshot();
+  const baseId = baseIdOf(e);
+  state.custom = state.custom.filter(x => x.id !== e.id);
+  state.hidden.delete(baseId);
+  if (!persistAll()) { restore(snap); return; }
+  select(baseId);
+  toast('Ahora ves la versión del equipo.', {
+    action: { label: 'Deshacer', run() { restore(snap); persistAll(); select(e.id); } }
+  });
+}
+
+function showPublishInfo() {
+  ask({
+    title: 'Publicar en la base del equipo',
+    message: `1. Abre Ajustes → Base compartida → Generar archivo.\n2. Reemplaza data/registros.js en el repositorio con el archivo descargado y súbelo.\n3. En unos minutos el sitio se actualiza para todos. Tus copias locales que ya queden publicadas se limpian solas.\n\nAhora tienes ${plural(unpublishedCount(), 'cambio local sin publicar', 'cambios locales sin publicar')}.`,
+    actions: [{ label: 'Cerrar', value: null }, { label: 'Abrir ajustes', value: 'settings', kind: 'primary' }]
+  }).then(v => { if (v === 'settings') openSettings(); });
 }
 
 function snowText(e) {
@@ -1054,6 +1171,7 @@ function refreshSettingsInfo() {
   $('#runsLogged').textContent = registradas;
   $('#resetAllProgress').disabled = !activas;
   $('#baseCount').textContent = BASE.length;
+  $('#unpublished').textContent = unpublishedCount();
   $('#baseDate').textContent = BASE_DATA.actualizado || 'sin fecha';
 }
 
@@ -1091,6 +1209,8 @@ function openSettings(focus) {
   const f = $('#settingsForm');
   f.elements.snow.value = store.raw(KEYS.snow);
   f.elements.theme.value = store.raw(KEYS.theme) || 'system';
+  f.dataset.prevTheme = f.elements.theme.value;
+  delete f.dataset.saved;
   refreshSettingsInfo();
   document.body.classList.remove('menu-open');
   $('#settings').showModal();
@@ -1111,6 +1231,7 @@ function saveSettings(ev) {
   } else {
     store.setRaw(KEYS.snow, '');
   }
+  ev.currentTarget.dataset.saved = '1';
   $('#settings').close();
   toast('Ajustes guardados.');
 }
@@ -1199,6 +1320,15 @@ function bindEvents() {
       case 'finish-run': finishRun(e); break;
       case 'delete-run': deleteRun(e, btn.dataset.run); break;
       case 'zoom': openLightbox(e.imagen); break;
+      case 'revert': revertEntry(e); break;
+      case 'publish-info': showPublishInfo(); break;
+      case 'open-related': {
+        const target = allEntries().find(x => x.id === btn.dataset.id);
+        if (target && !inView(target, state.view)) setView(classOf(target) === 'checklist' ? 'checklists' : 'library');
+        if (target && !state.visible.some(x => x.id === target.id)) { $('#search').value = ''; $('#category').value = ''; state.status = ''; }
+        select(btn.dataset.id, { scroll: true });
+        break;
+      }
     }
   });
   $('#detail').addEventListener('change', ev => {
@@ -1255,6 +1385,11 @@ function bindEvents() {
   $('#settingsForm').addEventListener('submit', saveSettings);
   $$('[data-dismiss]', settings).forEach(b => b.addEventListener('click', () => settings.close()));
   $('#settingsForm').elements.theme.addEventListener('change', ev => applyTheme(ev.target.value));
+  // El tema se previsualiza al elegirlo; si se cierra sin guardar, vuelve al anterior.
+  settings.addEventListener('close', () => {
+    const f = $('#settingsForm');
+    if (!f.dataset.saved && f.dataset.prevTheme) applyTheme(f.dataset.prevTheme);
+  });
   $('#restoreHidden').addEventListener('click', () => {
     const n = state.hidden.size;
     state.hidden.clear();
@@ -1292,7 +1427,8 @@ function bindEvents() {
 function onKeydown(ev) {
   if (document.querySelector('dialog[open]')) return;
   const target = ev.target, search = $('#search');
-  const typing = target.closest?.('input, textarea, select, [contenteditable="true"]');
+  // Las casillas de los checklists no cuentan como escritura: los atajos siguen funcionando con ellas enfocadas.
+  const typing = target.closest?.('input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable="true"]');
 
   if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') { ev.preventDefault(); search.focus(); search.select(); return; }
 
@@ -1338,6 +1474,7 @@ function selectFromHash() {
    ========================================================================== */
 
 (function init() {
+  const synced = pruneSynced();
   state.runs = loadRuns();
   store.set(KEYS.runs, state.runs);
   applyTheme(store.raw(KEYS.theme) || 'system');
@@ -1348,5 +1485,11 @@ function selectFromHash() {
   render();
   if (!BASE.length) {
     toast('No se pudo cargar la base compartida (data/registros.js). Solo verás tus registros locales.', { kind: 'error' });
+  } else if (synced) {
+    toast(`${plural(synced, 'registro tuyo ya está', 'registros tuyos ya están')} en la base del equipo. Se quitó la copia local.`);
+  }
+  // Uso sin conexión e instalación como aplicación (solo cuando se sirve por http/https).
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* sin soporte o bloqueado */ });
   }
 })();

@@ -15,6 +15,10 @@ Base de conocimiento para soporte de TI: soluciones de incidencias y checklists 
 - **Abrir en ServiceNow:** con la URL de tu instancia configurada, abre el folio directamente.
 - **Imágenes de referencia:** se pegan con `Ctrl+V`, se arrastran o se eligen; se comprimen antes de guardarse.
 - **Respaldos:** exporta e importa todo en un archivo JSON, combinando o reemplazando lo que ya tienes.
+- **Local o del equipo:** cada registro indica si viene de la base del equipo, si lo editaste en tu navegador (✎) o si solo existe en tu navegador (●). Una versión local se puede descartar con *Volver a la versión del equipo*.
+- **Relacionados:** el detalle sugiere registros con la misma categoría, grupo o palabras en común.
+- **Enlaces clicables** dentro de la solución y los comentarios.
+- **Sin conexión e instalable:** después de la primera visita abre sin internet y se puede instalar como aplicación desde el navegador.
 - **Tema claro y oscuro**, y diseño adaptado a teléfono.
 
 ## Cómo usarla
@@ -45,7 +49,7 @@ Para abrir un registro directamente: `index.html#INC4093079`.
 
 En unos minutos el sitio se actualiza y el resto del equipo ve los cambios la próxima vez que abra la aplicación.
 
-Los ids de cada registro se conservan, así que las notas y ediciones locales de cada persona siguen funcionando después de una actualización. Si alguien ya había editado por su cuenta un registro que luego se publica, seguirá viendo su versión; puede eliminarla para volver a la del equipo y restaurarla desde *Ajustes → Restaurar*.
+Los ids de cada registro se conservan, así que fijados, bitácoras y ediciones locales siguen funcionando después de una actualización. Cuando la base publicada ya incluye exactamente tus cambios, la aplicación quita sola la copia local para que vuelvas a recibir las actualizaciones del equipo. Si tu versión local difiere de la publicada, el registro muestra ✎ y puedes usar *Volver a la versión del equipo*. *Ajustes → Base compartida* muestra cuántos cambios locales tienes sin publicar.
 
 ## Bitácora de checklists
 
@@ -69,6 +73,8 @@ Los registros que trae la aplicación de fábrica son ejemplos de referencia. Si
 | `styles.css` | Estilos, variables de color y diseño adaptable |
 | `app.js` | Búsqueda, almacenamiento, bitácora y toda la lógica |
 | `data/registros.js` | La base compartida del equipo |
+| `sw.js` | Service worker: uso sin conexión (siempre intenta primero la versión en línea) |
+| `manifest.webmanifest`, `icon.svg` | Instalación como aplicación e ícono |
 
 No usa dependencias ni proceso de compilación. Solo carga las tipografías Manrope y DM Mono desde Google Fonts; sin conexión usa las del sistema.
 

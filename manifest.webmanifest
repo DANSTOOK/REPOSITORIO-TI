@@ -1,0 +1,14 @@
+{
+  "name": "KBD · Knowledge Base Desk",
+  "short_name": "KBD",
+  "description": "Base de conocimiento de soporte TI: soluciones de incidencias y checklists operativos.",
+  "lang": "es-MX",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b2a25",
+  "theme_color": "#0b2a25",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
