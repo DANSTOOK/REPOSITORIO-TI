@@ -20,7 +20,7 @@ const VIEWS = {
 const THEMES = { system: '◐ Tema: sistema', light: '☀ Tema: claro', dark: '☾ Tema: oscuro' };
 const KEYS = {
   custom: 'kbd-custom', hidden: 'kbd-hidden', pinned: 'kbd-pinned', progress: 'kbd-progress',
-  runs: 'kbd-runs', snow: 'kbd-servicenow-base', theme: 'kbd-theme', sort: 'kbd-sort'
+  runs: 'kbd-runs', snow: 'kbd-servicenow-base', theme: 'kbd-theme', sort: 'kbd-sort', recent: 'kbd-recent'
 };
 
 /* ==========================================================================
@@ -74,6 +74,7 @@ const state = {
   hidden: new Set(stringList(store.get(KEYS.hidden, []))),
   pinned: new Set(stringList(store.get(KEYS.pinned, []))),
   progress: sanitizeProgress(store.get(KEYS.progress, {})),
+  recent: stringList(store.get(KEYS.recent, [])).slice(0, 8),
   runs: {},
   view: 'library',
   status: '',
@@ -317,6 +318,15 @@ function hl(text, terms) {
   return str.split(re).map((part, i) => i % 2 ? `<mark>${esc(part)}</mark>` : esc(part)).join('');
 }
 
+// "OXXO-Mx TI SopPOS.Performance" → grupo atenuado › subcategoría resaltada.
+function catHtml(cat, terms = []) {
+  const v = String(cat || '').trim();
+  if (!v) return '<span class="cat-leaf is-empty">Sin categoría</span>';
+  const i = v.lastIndexOf('.');
+  if (i <= 0 || i === v.length - 1) return `<span class="cat-leaf">${hl(v, terms)}</span>`;
+  return `<span class="cat-group">${hl(v.slice(0, i), terms)}</span><span class="cat-sep" aria-hidden="true">›</span><span class="cat-leaf">${hl(v.slice(i + 1), terms)}</span>`;
+}
+
 function snippet(e, terms) {
   if (!terms.length) return '';
   const visible = norm(`${e.folio} ${e.descripcion} ${e.categoria}`);
@@ -347,6 +357,11 @@ function render() {
   const base = filterEntries(entries);
   const list = state.status && showsChips() ? base.filter(e => typeOf(e) === state.status) : base;
   state.visible = list;
+
+  const nFilters = activeFilters(), clear = $('#clearFilters');
+  $('#searchClear').hidden = !$('#search').value;
+  clear.disabled = !nFilters;
+  clear.textContent = nFilters ? `Limpiar filtros (${nFilters})` : 'Limpiar';
 
   renderChips(base);
   renderCards(list);
@@ -428,7 +443,7 @@ function cardHtml(e, terms) {
   return `<button type="button" class="card${selected ? ' is-selected' : ''}" data-id="${esc(e.id)}" role="option" aria-selected="${selected}">
     <span class="card-top"><span class="folio">${hl(e.folio || 'SIN FOLIO', terms)}</span>${badge}<span class="card-icons">${icons}</span></span>
     <span class="card-title">${hl(e.descripcion || 'Sin descripción', terms)}</span>
-    <span class="card-sub">${hl(e.categoria || 'Sin categoría', terms)}</span>
+    <span class="card-sub" title="${esc(e.categoria || '')}">${catHtml(e.categoria, terms)}</span>
     ${snippet(e, terms)}${progress}
   </button>`;
 }
@@ -469,12 +484,62 @@ function linkify(text) {
   }).join('');
 }
 
-function textSection(title, text, { tone = '', empty = '' } = {}) {
+// `action` agrega un botón dentro del recuadro vacío para completar la información en un clic.
+function textSection(title, text, { tone = '', empty = '', action = '' } = {}) {
   const v = String(text ?? '').trim();
+  const body = v ? linkify(v)
+    : `<span>${esc(empty)}</span>${action ? `<button type="button" class="btn btn-primary btn-sm" data-act="add-solution">${action}</button>` : ''}`;
   return `<section class="record-section">
     <div class="section-head"><h3>${title}</h3>${v ? copyBtn(v) : ''}</div>
-    <div class="record-text ${tone}${v ? '' : ' is-blank'}">${v ? linkify(v) : esc(empty)}</div>
+    <div class="record-text ${tone}${v ? '' : ' is-blank'}${!v && action ? ' has-action' : ''}">${body}</div>
   </section>`;
+}
+
+/* ---------- Panel de inicio (sin registro seleccionado) ---------- */
+
+function homeItem(e, extra = '') {
+  return `<li><button type="button" class="home-item" data-open="${esc(e.id)}">
+    <span class="folio">${esc(e.folio || 'SIN FOLIO')}</span>
+    <span class="home-title">${esc(e.descripcion || 'Sin descripción')}</span>${extra}
+  </button></li>`;
+}
+
+function homePanel(entries) {
+  const byId = new Map(entries.map(e => [e.id, e]));
+  const enCurso = entries.filter(e => classOf(e) === 'checklist' && runsOf(e).activa && stepsOf(e).length);
+  const recientes = state.recent.map(id => byId.get(id)).filter(Boolean).slice(0, 5);
+  const pendientes = entries.filter(e => inView(e, 'unresolved'));
+  const blocks = [];
+
+  if (enCurso.length) {
+    blocks.push(`<section class="home-block"><h3>▶ Checklists en curso</h3><ul class="home-list">${enCurso.map(e => {
+      const total = stepsOf(e).length, done = doneSteps(e).size;
+      return homeItem(e, `<span class="home-progress"><span class="meter"><span style="width:${Math.round(done / total * 100)}%"></span></span><small>${done}/${total}</small></span>`);
+    }).join('')}</ul></section>`);
+  }
+  if (recientes.length) {
+    blocks.push(`<section class="home-block"><h3>↺ Vistos recientemente</h3><ul class="home-list">${recientes.map(e => homeItem(e)).join('')}</ul></section>`);
+  }
+  if (pendientes.length) {
+    blocks.push(`<section class="home-block"><h3>✎ Ayuda a documentar <span class="home-count">${pendientes.length}</span></h3>
+      <p class="home-hint">Si ya resolviste alguno, agrega la solución para que el equipo la encuentre.</p>
+      <ul class="home-list">${pendientes.slice(0, 3).map(e => homeItem(e, `<span class="home-cta" data-document="${esc(e.id)}">＋ Documentar</span>`)).join('')}</ul>
+      ${pendientes.length > 3 ? `<button type="button" class="link home-more" data-go-view="unresolved">Ver los ${pendientes.length} pendientes →</button>` : ''}</section>`);
+  }
+
+  return `<div class="home">
+    <div class="home-head">
+      <h2>¿Qué necesitas resolver?</h2>
+      <p>Busca por folio, síntoma o categoría, o elige un registro de la lista.</p>
+      <div class="home-tips"><span><kbd>/</kbd> Buscar</span><span><kbd>N</kbd> Nueva entrada</span><span><kbd>↑</kbd><kbd>↓</kbd> Navegar</span><span><kbd>P</kbd> Fijar</span></div>
+    </div>
+    ${blocks.join('') || `<section class="home-block home-welcome">
+      <h3>Primeros pasos</h3>
+      <ol><li>Abre un registro de la lista para ver la solución y copiarla a ServiceNow.</li>
+      <li>Fija con ☆ los que más usas: aparecerán en <b>Fijados</b>.</li>
+      <li>Si resolviste algo nuevo, regístralo con <b>＋ Registrar</b>.</li></ol>
+    </section>`}
+  </div>`;
 }
 
 /* ---------- Relacionados ---------- */
@@ -522,7 +587,7 @@ function originNotice(e) {
 function checklistSection(e) {
   const steps = stepsOf(e);
   if (!steps.length) {
-    return textSection('Pasos', '', { empty: 'Este checklist aún no tiene pasos. Edita el registro y escribe un paso por línea.' });
+    return textSection('Pasos', '', { empty: 'Este checklist aún no tiene pasos.', action: '＋ Agregar pasos' });
   }
   const { activa, historial } = runsOf(e);
   const done = doneSteps(e), pct = Math.round(done.size / steps.length * 100);
@@ -575,12 +640,7 @@ function renderDetail(entries) {
   lastDetailId = e?.id || null;
 
   if (!e) {
-    el.innerHTML = `<div class="placeholder">
-      <div class="placeholder-icon">◫</div>
-      <h2>Selecciona un registro</h2>
-      <p>Consulta los pasos, copia el texto para ServiceNow o completa la información faltante.</p>
-      <p><kbd>↑</kbd> <kbd>↓</kbd> para moverte entre resultados</p>
-    </div>`;
+    el.innerHTML = homePanel(entries);
     return;
   }
 
@@ -594,7 +654,8 @@ function renderDetail(entries) {
         tone: 'tone-solution',
         empty: type === 'informativa'
           ? 'Esta entrada es una guía de referencia. Usa la categoría y el comentario para escalar el caso.'
-          : 'Aún no hay una solución documentada. Si ya la conoces, edita el registro para agregarla.'
+          : 'Aún no hay una solución documentada. ¿Ya la conoces?',
+        action: type === 'informativa' ? '' : '＋ Agregar la solución'
       });
 
   el.innerHTML = `<article class="record">
@@ -603,18 +664,24 @@ function renderDetail(entries) {
       <div class="record-title">
         <div class="record-folio"><span>${esc(e.folio || 'SIN FOLIO')}</span>${e.folio ? copyBtn(e.folio) : ''}</div>
         <h2>${esc(e.descripcion || 'Sin descripción')}</h2>
+        <div class="record-cat" title="${esc(e.categoria || '')}">${catHtml(e.categoria)}</div>
       </div>
       ${status}
     </div>
 
     <div class="record-actions">
-      <button type="button" class="btn btn-ghost btn-sm${pinned ? ' is-on' : ''}" data-act="pin" aria-pressed="${pinned}">${pinned ? '★ Fijado' : '☆ Fijar'}</button>
-      <button type="button" class="btn btn-ghost btn-sm" data-act="copy-snow">⧉ Copiar para ServiceNow</button>
-      ${/^INC\d+$/i.test(e.folio || '') ? '<button type="button" class="btn btn-ghost btn-sm" data-act="open-snow">↗ Abrir en ServiceNow</button>' : ''}
+      <button type="button" class="btn btn-primary btn-sm" data-act="copy-snow" title="Arma un texto con folio, categoría y solución para las notas de trabajo">⧉ Copiar para ServiceNow</button>
+      ${/^INC\d+$/i.test(e.folio || '') ? '<button type="button" class="btn btn-ghost btn-sm" data-act="open-snow">↗ Abrir folio</button>' : ''}
+      <button type="button" class="btn btn-ghost btn-sm${pinned ? ' is-on' : ''}" data-act="pin" aria-pressed="${pinned}" title="Atajo: P">${pinned ? '★ Fijado' : '☆ Fijar'}</button>
       <span class="spacer"></span>
-      <button type="button" class="btn btn-danger-ghost btn-sm" data-act="delete">Eliminar</button>
-      <button type="button" class="btn btn-ghost btn-sm" data-act="duplicate">Duplicar</button>
-      <button type="button" class="btn btn-primary btn-sm" data-act="edit">Editar</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-act="edit" title="Atajo: E">✎ Editar</button>
+      <details class="more">
+        <summary class="btn btn-ghost btn-sm" aria-label="Más acciones" title="Más acciones">⋯</summary>
+        <div class="more-menu" role="menu">
+          <button type="button" role="menuitem" data-act="duplicate">⧉ Duplicar como nuevo</button>
+          <button type="button" role="menuitem" data-act="delete" class="is-danger">✕ Eliminar</button>
+        </div>
+      </details>
     </div>
 
     ${originNotice(e)}
@@ -648,6 +715,10 @@ function setHash(id) {
 function select(id, { scroll = false } = {}) {
   state.selectedId = id || null;
   setHash(state.selectedId);
+  if (id) {
+    state.recent = [id, ...state.recent.filter(x => x !== id)].slice(0, 8);
+    store.set(KEYS.recent, state.recent);
+  }
   render();
   if (scroll && id) $(`.card[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' });
 }
@@ -669,6 +740,23 @@ function move(delta) {
   const next = i < 0 ? (delta > 0 ? 0 : list.length - 1) : Math.max(0, Math.min(list.length - 1, i + delta));
   select(list[next].id, { scroll: true });
 }
+
+// Abre un registro aunque esté fuera de la vista o de los filtros actuales.
+function openEntry(id) {
+  const target = allEntries().find(x => x.id === id);
+  if (!target) return;
+  if (!inView(target, state.view)) setView(classOf(target) === 'checklist' ? 'checklists' : 'library');
+  if (!state.visible.some(x => x.id === target.id)) { $('#search').value = ''; $('#category').value = ''; state.status = ''; }
+  select(id, { scroll: true });
+}
+
+// Abre el formulario directamente en el campo de la solución o los pasos.
+function documentEntry(e) {
+  openEntryModal(e);
+  $('#entryForm').elements.solucion.focus();
+}
+
+const activeFilters = () => [$('#search').value.trim(), $('#category').value, state.status && showsChips() ? state.status : ''].filter(Boolean).length;
 
 function clearFilters() {
   $('#search').value = '';
@@ -966,9 +1054,11 @@ function updateClaseUI() {
   const checklist = $('#entryForm').elements.clase.value === 'checklist';
   const area = $('#entryForm').elements.solucion;
   $('#solucionLabel').textContent = checklist ? 'Pasos del checklist' : 'Solución detallada';
+  // Cuenta en vivo los pasos que verá el equipo, para que se note cómo se va a mostrar.
+  const n = stepsOf({ solucion: area.value }).length;
   $('#solucionHint').textContent = checklist
-    ? 'Escribe un paso por línea. Se mostrarán como casillas para marcar el avance.'
-    : 'Describe cómo se resolvió; un paso por línea facilita seguirlo.';
+    ? `Escribe un paso por línea. Se mostrarán como casillas para marcar el avance.${n ? ` · ${plural(n, 'paso', 'pasos')}` : ''}`
+    : `Describe cómo se resolvió; un paso por línea facilita seguirlo.${n > 1 ? ` · ${plural(n, 'paso detectado', 'pasos detectados')}` : ''}`;
   area.placeholder = checklist ? 'Detener CEDIS\nEnviar inventario\nActivar recolección total' : 'Ej. Copiar la tabla TENDER de una tienda que funcione correctamente.';
 }
 
@@ -1248,6 +1338,7 @@ function bindEvents() {
     $('#menuBtn').setAttribute('aria-expanded', open);
   });
   document.addEventListener('click', ev => {
+    $$('details.more[open]').forEach(d => { if (!d.contains(ev.target)) d.removeAttribute('open'); });
     if (document.body.classList.contains('menu-open') && (!ev.target.closest('.sidebar') || ev.target.closest('.side-action'))) {
       if (ev.target.closest('#menuBtn')) return;
       document.body.classList.remove('menu-open');
@@ -1272,6 +1363,7 @@ function bindEvents() {
 
   // Filtros
   $('#search').addEventListener('input', render);
+  $('#searchClear').addEventListener('click', () => { $('#search').value = ''; render(); $('#search').focus(); });
   $('#category').addEventListener('change', render);
   $('#sort').addEventListener('change', () => { store.setRaw(KEYS.sort, $('#sort').value); render(); });
   $('#clearFilters').addEventListener('click', clearFilters);
@@ -1302,7 +1394,16 @@ function bindEvents() {
   $('#detail').addEventListener('click', async ev => {
     const copy = ev.target.closest('[data-copy]');
     if (copy) { flashCopy(copy, await copyText(copy.dataset.copy)); return; }
+    // Panel de inicio
+    const doc = ev.target.closest('[data-document]');
+    if (doc) { const x = allEntries().find(y => y.id === doc.dataset.document); if (x) { openEntry(x.id); documentEntry(x); } return; }
+    const open = ev.target.closest('[data-open]');
+    if (open) { openEntry(open.dataset.open); return; }
+    const go = ev.target.closest('[data-go-view]');
+    if (go) { setView(go.dataset.goView); return; }
+
     const btn = ev.target.closest('[data-act]');
+    btn?.closest('details.more')?.removeAttribute('open');
     const e = currentEntry();
     if (!btn || !e) return;
     switch (btn.dataset.act) {
@@ -1322,15 +1423,18 @@ function bindEvents() {
       case 'zoom': openLightbox(e.imagen); break;
       case 'revert': revertEntry(e); break;
       case 'publish-info': showPublishInfo(); break;
-      case 'open-related': {
-        const target = allEntries().find(x => x.id === btn.dataset.id);
-        if (target && !inView(target, state.view)) setView(classOf(target) === 'checklist' ? 'checklists' : 'library');
-        if (target && !state.visible.some(x => x.id === target.id)) { $('#search').value = ''; $('#category').value = ''; state.status = ''; }
-        select(btn.dataset.id, { scroll: true });
-        break;
-      }
+      case 'open-related': openEntry(btn.dataset.id); break;
+      case 'add-solution': documentEntry(e); break;
     }
   });
+  // El menú "⋯" se abre hacia la izquierda; si no cabe (por ejemplo en teléfono), se abre hacia la derecha.
+  $('#detail').addEventListener('toggle', ev => {
+    const d = ev.target;
+    if (!d.matches?.('details.more') || !d.open) return;
+    const menu = $('.more-menu', d);
+    menu.classList.remove('is-left');
+    if (menu.getBoundingClientRect().left < 8) menu.classList.add('is-left');
+  }, true);
   $('#detail').addEventListener('change', ev => {
     const box = ev.target.closest('[data-step]');
     const e = currentEntry();
@@ -1343,6 +1447,7 @@ function bindEvents() {
   form.addEventListener('input', ev => {
     state.formDirty = true;
     if (ev.target.name === 'folio') updateFolioHint();
+    if (ev.target.name === 'solucion') updateClaseUI();
     if (ev.target.name === 'tipo') form.dataset.tipoTouched = '1';
     // Al escribir la solución de un pendiente, se marca como documentada salvo que el usuario haya elegido el estado.
     if (ev.target.name === 'solucion' && ev.target.value.trim() && form.elements.tipo.value === 'pendiente' && !form.dataset.tipoTouched) {

@@ -16,6 +16,8 @@ Base de conocimiento para soporte de TI: soluciones de incidencias y checklists 
 - **Imágenes de referencia:** se pegan con `Ctrl+V`, se arrastran o se eligen; se comprimen antes de guardarse.
 - **Respaldos:** exporta e importa todo en un archivo JSON, combinando o reemplazando lo que ya tienes.
 - **Local o del equipo:** cada registro indica si viene de la base del equipo, si lo editaste en tu navegador (✎) o si solo existe en tu navegador (●). Una versión local se puede descartar con *Volver a la versión del equipo*.
+- **Panel de inicio:** sin un registro abierto, muestra los checklists en curso, lo que viste hace poco y los pendientes que puedes documentar con un clic.
+- **Documentar en un clic:** los registros sin solución tienen *＋ Agregar la solución*, que abre el formulario directo en ese campo; mientras escribes, indica cuántos pasos detectó.
 - **Relacionados:** el detalle sugiere registros con la misma categoría, grupo o palabras en común.
 - **Enlaces clicables** dentro de la solución y los comentarios.
 - **Sin conexión e instalable:** después de la primera visita abre sin internet y se puede instalar como aplicación desde el navegador.
